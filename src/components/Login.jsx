@@ -1,12 +1,10 @@
-// src/components/Login.jsx
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom'; // Для навигации в классовом компоненте
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext'; // Импортируем хук для работы с контекстом
+import { useAuth } from './context/AuthContext';
 
 class LoginClass extends Component {
   state = {
-    isLoginMode: true, // true - вход, false - регистрация
+    isLoginMode: true,
     email: '',
     phone: '',
     password: '',
@@ -16,9 +14,9 @@ class LoginClass extends Component {
     passwordError: '',
     confirmPasswordError: '',
     successMessage: '',
+    serverError: '', // Добавляем для отображения ошибок с сервера
   };
 
-  // Переключение между режимами входа и регистрации
   toggleMode = () => {
     this.setState((prevState) => ({
       isLoginMode: !prevState.isLoginMode,
@@ -27,19 +25,19 @@ class LoginClass extends Component {
       passwordError: '',
       confirmPasswordError: '',
       successMessage: '',
+      serverError: '',
     }));
   };
 
   handleInputChange = (e) => {
     const { name, value } = e.target;
-    this.setState({ [name]: value, [`${name}Error`]: '' });
+    this.setState({ [name]: value, [`${name}Error`]: '', serverError: '' });
   };
 
   validateInputs = () => {
     const { isLoginMode, email, phone, password, confirmPassword } = this.state;
     let isValid = true;
 
-    // Валидация email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) {
       this.setState({ emailError: 'Пожалуйста, введите email' });
@@ -49,7 +47,6 @@ class LoginClass extends Component {
       isValid = false;
     }
 
-    // Валидация номера телефона
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
     if (!phone.trim()) {
       this.setState({ phoneError: 'Пожалуйста, введите номер телефона' });
@@ -59,7 +56,6 @@ class LoginClass extends Component {
       isValid = false;
     }
 
-    // Валидация пароля
     if (!password.trim()) {
       this.setState({ passwordError: 'Пожалуйста, введите пароль' });
       isValid = false;
@@ -68,7 +64,6 @@ class LoginClass extends Component {
       isValid = false;
     }
 
-    // Валидация подтверждения пароля (только для регистрации)
     if (!isLoginMode) {
       if (!confirmPassword.trim()) {
         this.setState({ confirmPasswordError: 'Пожалуйста, подтвердите пароль' });
@@ -85,33 +80,36 @@ class LoginClass extends Component {
   handleSubmit = async (e) => {
     e.preventDefault();
     const { isLoginMode, email, phone, password } = this.state;
-    const { login } = this.props; // Получаем функцию login из контекста
+    const { login } = this.props;
 
     if (this.validateInputs()) {
       try {
+        const payload = { email, phone, password };
+        console.log('Sending data:', payload); // Отладка
         const url = isLoginMode
-          ? 'http://localhost:5000/api/auth/login'
-          : 'http://localhost:5000/api/auth/register';
+          ? 'http://localhost:8000/api/auth/login'
+          : 'http://localhost:8000/api/auth/register';
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, phone, password }),
+          body: JSON.stringify(payload),
         });
 
         const data = await response.json();
+        console.log('Response:', data); // Отладка
         if (response.ok) {
-          // Успешный вход или регистрация
-          const userData = { email, name: data.name || email.split('@')[0] }; // Предполагаем, что сервер возвращает имя
-          login(userData); // Сохраняем пользователя в контексте
-          this.setState({ successMessage: isLoginMode ? 'Вход успешен!' : 'Регистрация успешна!' });
+          const userData = { email, name: data.name || email.split('@')[0] };
+          login(userData);
+          this.setState({ successMessage: data.message || (isLoginMode ? 'Вход успешен!' : 'Регистрация успешна!'), serverError: '' });
           setTimeout(() => {
-            this.props.navigate('/'); // Перенаправляем на главную страницу
+            this.props.navigate('/');
           }, 1500);
         } else {
-          this.setState({ passwordError: data.message || 'Ошибка при входе/регистрации' });
+          this.setState({ serverError: data.message || 'Ошибка при входе/регистрации' });
         }
       } catch (err) {
-        this.setState({ passwordError: 'Ошибка сервера. Попробуйте снова.' });
+        console.error('Error:', err); // Отладка
+        this.setState({ serverError: 'Ошибка сервера. Попробуйте снова.' });
       }
     }
   };
@@ -128,6 +126,7 @@ class LoginClass extends Component {
       passwordError,
       confirmPasswordError,
       successMessage,
+      serverError,
     } = this.state;
 
     return (
@@ -140,9 +139,11 @@ class LoginClass extends Component {
           {successMessage && (
             <p className="text-green-600 text-center mb-4">{successMessage}</p>
           )}
+          {serverError && (
+            <p className="text-red-600 text-center mb-4">{serverError}</p>
+          )}
 
           <form onSubmit={this.handleSubmit} className="space-y-4">
-            {/* Email */}
             <div>
               <label className="block text-gray-700 mb-2 font-medium">Email</label>
               <input
@@ -158,7 +159,6 @@ class LoginClass extends Component {
               {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
             </div>
 
-            {/* Номер телефона */}
             <div>
               <label className="block text-gray-700 mb-2 font-medium">Номер телефона</label>
               <input
@@ -174,7 +174,6 @@ class LoginClass extends Component {
               {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
             </div>
 
-            {/* Пароль */}
             <div>
               <label className="block text-gray-700 mb-2 font-medium">Пароль</label>
               <input
@@ -190,7 +189,6 @@ class LoginClass extends Component {
               {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
             </div>
 
-            {/* Подтверждение пароля (только для регистрации) */}
             {!isLoginMode && (
               <div>
                 <label className="block text-gray-700 mb-2 font-medium">Подтвердите пароль</label>
@@ -210,7 +208,6 @@ class LoginClass extends Component {
               </div>
             )}
 
-            {/* Кнопка отправки */}
             <button
               type="submit"
               className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors duration-300 font-semibold"
@@ -219,7 +216,6 @@ class LoginClass extends Component {
             </button>
           </form>
 
-          {/* Переключение между входом и регистрацией */}
           <p className="text-center mt-4">
             {isLoginMode ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}{' '}
             <button
@@ -235,10 +231,9 @@ class LoginClass extends Component {
   }
 }
 
-// Обёртка для использования хуков в классовом компоненте
 const Login = (props) => {
   const navigate = useNavigate();
-  const { login } = useAuth(); // Получаем функцию login из контекста
+  const { login } = useAuth();
   return <LoginClass {...props} navigate={navigate} login={login} />;
 };
 

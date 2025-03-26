@@ -47,7 +47,7 @@ class ProductClass extends Component {
   fetchBranches = async () => {
     try {
       this.setState({ loading: true, error: null });
-      const response = await fetch('http://localhost:5000/api/public/branches');
+      const response = await fetch('http://localhost:8000/api/public/branches');
       const data = await response.json();
       if (response.ok) {
         this.setState({ branches: data });
@@ -64,7 +64,7 @@ class ProductClass extends Component {
   fetchCategories = async () => {
     try {
       this.setState({ loading: true, error: null });
-      const response = await fetch('http://localhost:5000/api/public/categories');
+      const response = await fetch('http://localhost:8000/api/public/categories');
       const data = await response.json();
       if (response.ok) {
         this.setState({ categories: data });
@@ -81,7 +81,7 @@ class ProductClass extends Component {
   fetchProducts = async () => {
     try {
       this.setState({ loading: true, error: null });
-      const response = await fetch('http://localhost:5000/api/public/products');
+      const response = await fetch('http://localhost:8000/api/public/products');
       const data = await response.json();
       if (response.ok) {
         this.setState({ products: data });
@@ -319,7 +319,7 @@ class ProductClass extends Component {
                           <img
                             src={
                               product.image
-                                ? `http://localhost:5000${product.image}`
+                                ? `http://localhost:8000${product.image}`
                                 : 'https://via.placeholder.com/150?text=Image+Not+Found'
                             }
                             alt={product.name}
@@ -359,7 +359,7 @@ class ProductClass extends Component {
               <img
                 src={
                   selectedProduct.image
-                    ? `http://localhost:5000${selectedProduct.image}`
+                    ? `http://localhost:8000${selectedProduct.image}`
                     : 'https://via.placeholder.com/150?text=Image+Not+Found'
                 }
                 alt={selectedProduct.name}
