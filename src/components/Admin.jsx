@@ -120,9 +120,7 @@ export default class Admin extends Component {
 
     fetchProducts = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/admin/products', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
-            });
+            const response = await fetch('http://localhost:8000/api/admin/products');
             const data = await response.json();
             if (response.ok) this.setState({ products: data });
             else this.setState({ error: data.message || 'Ошибка при загрузке продуктов' });
@@ -432,9 +430,6 @@ export default class Admin extends Component {
         try {
             const response = await fetch(url, {
                 method,
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-                },
                 body: formData,
             });
             const data = await response.json();
@@ -482,7 +477,6 @@ export default class Admin extends Component {
         try {
             const response = await fetch(`http://localhost:8000/api/admin/product/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
             });
             if (response.ok) {
                 this.setState({
