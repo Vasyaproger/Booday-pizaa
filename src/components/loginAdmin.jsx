@@ -40,6 +40,8 @@ const LoginAdmin = () => {
             if (response.ok) {
                 // Успешный вход, перенаправляем на страницу админки
                 setState((prev) => ({ ...prev, message: 'Вход успешен', loading: false }));
+                // Сохраняем только индикатор успешного входа
+                localStorage.setItem('isAdminLoggedIn', 'true');
                 setTimeout(() => {
                     navigate('/admin/dashboard');
                 }, 1000); // Задержка, чтобы пользователь увидел сообщение
@@ -55,15 +57,15 @@ const LoginAdmin = () => {
     const { username, password, error, message, loading } = state;
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-300 hover:shadow-3xl">
+        <div className="min-h-screen bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:shadow-3xl">
                 <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Вход для администратора</h2>
 
                 {error && (
-                    <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center">{error}</div>
+                    <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center animate-pulse">{error}</div>
                 )}
                 {message && (
-                    <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-center">{message}</div>
+                    <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-center animate-pulse">{message}</div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -74,7 +76,7 @@ const LoginAdmin = () => {
                             name="username"
                             value={username}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-boodai-orange transition-all duration-300"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
                             placeholder="Введите логин"
                             required
                         />
@@ -87,7 +89,7 @@ const LoginAdmin = () => {
                             name="password"
                             value={password}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-boodai-orange transition-all duration-300"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
                             placeholder="Введите пароль"
                             required
                         />
@@ -97,16 +99,26 @@ const LoginAdmin = () => {
                         type="submit"
                         disabled={loading}
                         className={`w-full py-3 rounded-lg text-white font-semibold transition-all duration-300 ${
-                            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-boodai-orange hover:bg-orange-600'
-                        }`}
+                            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700'
+                        } shadow-md hover:shadow-lg`}
                     >
-                        {loading ? 'Вход...' : 'Войти'}
+                        {loading ? (
+                            <div className="flex items-center justify-center">
+                                <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                </svg>
+                                Вход...
+                            </div>
+                        ) : (
+                            'Войти'
+                        )}
                     </button>
                 </form>
 
                 <p className="text-center text-gray-500 mt-4 text-sm">
                     Забыли пароль?{' '}
-                    <a href="#" className="text-boodai-orange hover:underline">
+                    <a href="#" className="text-orange-600 hover:underline">
                         Свяжитесь с поддержкой
                     </a>
                 </p>

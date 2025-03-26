@@ -26,11 +26,12 @@ export default class Admin extends Component {
         error: '',
         message: '',
         activeTab: 'users',
+        loading: false,
     };
 
     componentDidMount() {
-        const token = localStorage.getItem('adminToken');
-        if (!token) {
+        const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn');
+        if (!isAdminLoggedIn) {
             window.location.href = '/admin/login';
             return;
         }
@@ -68,64 +69,71 @@ export default class Admin extends Component {
 
     fetchUsers = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/users', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
-            });
+            this.setState({ loading: true });
+            const response = await fetch('http://localhost:8000/api/users');
             const data = await response.json();
             if (response.ok) this.setState({ users: data });
             else this.setState({ error: data.message || 'Ошибка при загрузке пользователей' });
         } catch (err) {
             this.setState({ error: 'Ошибка сервера при загрузке пользователей' });
+        } finally {
+            this.setState({ loading: false });
         }
     };
 
     fetchBranches = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/admin/branches', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
-            });
+            this.setState({ loading: true });
+            const response = await fetch('http://localhost:8000/api/admin/branches');
             const data = await response.json();
             if (response.ok) this.setState({ branches: data });
             else this.setState({ error: data.message || 'Ошибка при загрузке филиалов' });
         } catch (err) {
             this.setState({ error: 'Ошибка сервера при загрузке филиалов' });
+        } finally {
+            this.setState({ loading: false });
         }
     };
 
     fetchCategories = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/admin/categories', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
-            });
+            this.setState({ loading: true });
+            const response = await fetch('http://localhost:8000/api/admin/categories');
             const data = await response.json();
             if (response.ok) this.setState({ categories: data });
             else this.setState({ error: data.message || 'Ошибка при загрузке категорий' });
         } catch (err) {
             this.setState({ error: 'Ошибка сервера при загрузке категорий' });
+        } finally {
+            this.setState({ loading: false });
         }
     };
 
     fetchSubcategories = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/admin/subcategories', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
-            });
+            this.setState({ loading: true });
+            const response = await fetch('http://localhost:8000/api/admin/subcategories');
             const data = await response.json();
             if (response.ok) this.setState({ subcategories: data });
             else this.setState({ error: data.message || 'Ошибка при загрузке подкатегорий' });
         } catch (err) {
             this.setState({ error: 'Ошибка сервера при загрузке подкатегорий' });
+        } finally {
+            this.setState({ loading: false });
         }
     };
 
     fetchProducts = async () => {
         try {
+            this.setState({ loading: true });
             const response = await fetch('http://localhost:8000/api/admin/products');
             const data = await response.json();
             if (response.ok) this.setState({ products: data });
             else this.setState({ error: data.message || 'Ошибка при загрузке продуктов' });
         } catch (err) {
             this.setState({ error: 'Ошибка сервера при загрузке продуктов' });
+        } finally {
+            this.setState({ loading: false });
         }
     };
 
@@ -155,11 +163,10 @@ export default class Admin extends Component {
     sendPromoCode = async (e, username) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://localhost:8000/api/users/promo', {
+            const response = await fetch('http://localhost:8000/api/admin/promo', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
                 },
                 body: JSON.stringify({ promoCode: this.state.promoCode, username }),
             });
@@ -175,7 +182,6 @@ export default class Admin extends Component {
         try {
             const response = await fetch(`http://localhost:8000/api/users/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
             });
             const data = await response.json();
             if (response.ok) {
@@ -209,7 +215,6 @@ export default class Admin extends Component {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
                 },
                 body: JSON.stringify({ name: branchName, city: branchCity }),
             });
@@ -247,7 +252,6 @@ export default class Admin extends Component {
         try {
             const response = await fetch(`http://localhost:8000/api/admin/branch/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
             });
             if (response.ok) {
                 this.setState({
@@ -275,7 +279,6 @@ export default class Admin extends Component {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
                 },
                 body: JSON.stringify({ name: categoryName, emoji: categoryEmoji }),
             });
@@ -306,11 +309,7 @@ export default class Admin extends Component {
             this.setState({ error: 'Пожалуйста, укажите название подкатегории' });
             return;
         }
-        const token = localStorage.getItem('adminToken');
-        if (!token) {
-            this.setState({ error: 'Токен авторизации отсутствует. Пожалуйста, войдите снова.' });
-            return;
-        }
+
         const url = editingSubcategory
             ? `http://localhost:8000/api/admin/subcategory/${editingSubcategory.id}`
             : 'http://localhost:8000/api/admin/subcategory';
@@ -321,7 +320,6 @@ export default class Admin extends Component {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ name: subcategoryName, category: parseInt(selectedCategory) }),
             });
@@ -359,7 +357,7 @@ export default class Admin extends Component {
         this.setState({
             editingSubcategory: subcategory,
             subcategoryName: subcategory.name,
-            selectedCategory: subcategory.category,
+            selectedCategory: subcategory.category?.id || subcategory.category,
             activeTab: 'subcategory',
         });
     };
@@ -368,7 +366,6 @@ export default class Admin extends Component {
         try {
             const response = await fetch(`http://localhost:8000/api/admin/subcategory/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
             });
             if (response.ok) {
                 this.setState({
@@ -467,7 +464,7 @@ export default class Admin extends Component {
             prices: product.prices || { small: '', medium: '', large: '' },
             price: product.price || '',
             selectedBranch: product.branch.id,
-            selectedCategory: product.subcategory.category,
+            selectedCategory: product.subcategory.category?.id || product.subcategory.category,
             selectedSubcategory: product.subcategory.id,
             productImage: null,
         });
@@ -494,9 +491,9 @@ export default class Admin extends Component {
 
     isPizza = (subcategoryId) => {
         const { subcategories } = this.state;
-        const subcategory = subcategories.find((sub) => sub.id === subcategoryId);
+        const subcategory = subcategories.find((sub) => sub.id === parseInt(subcategoryId));
         if (!subcategory) return false;
-        const category = this.state.categories.find((cat) => cat.id === subcategory.category);
+        const category = this.state.categories.find((cat) => cat.id === (subcategory.category?.id || subcategory.category));
         return category && category.name.toLowerCase() === 'пицца';
     };
 
@@ -510,7 +507,7 @@ export default class Admin extends Component {
     };
 
     logout = () => {
-        localStorage.removeItem('adminToken');
+        localStorage.removeItem('isAdminLoggedIn');
         window.location.href = '/admin/login';
     };
 
@@ -540,15 +537,16 @@ export default class Admin extends Component {
             error,
             message,
             activeTab,
+            loading,
         } = this.state;
 
         const isPizza = selectedSubcategory ? this.isPizza(selectedSubcategory) : false;
         const filteredSubcategories = selectedCategory
-            ? subcategories.filter((sub) => sub.category === parseInt(selectedCategory))
+            ? subcategories.filter((sub) => (sub.category?.id || sub.category) === parseInt(selectedCategory))
             : [];
 
         return (
-            <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 py-8 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-center mb-8">
                         <h1 className="text-4xl sm:text-5xl font-extrabold text-center text-orange-600">
@@ -656,213 +654,225 @@ export default class Admin extends Component {
                                 </button>
                             </div>
 
-                            {activeTab === 'users' && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {users.map((user) => (
-                                        <div
-                                            key={user.id}
-                                            className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                                        >
-                                            <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{user.name}</h3>
-                                            <p className="text-gray-600 text-sm mb-1 text-center">
-                                                <strong>Логин:</strong> {user.username}
-                                            </p>
-                                            <p className="text-gray-600 text-sm mb-1 text-center">
-                                                <strong>Email:</strong> {user.email}
-                                            </p>
-                                            <p className="text-gray-600 text-sm mb-4 text-center">
-                                                <strong>Телефон:</strong> {user.phone}
-                                            </p>
-                                            <form onSubmit={(e) => this.sendPromoCode(e, user.username)} className="space-y-4">
-                                                <input
-                                                    type="text"
-                                                    name="promoCode"
-                                                    value={promoCode}
-                                                    onChange={this.handleInputChange}
-                                                    className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
-                                                    placeholder="Промокод"
-                                                />
-                                                <button
-                                                    type="submit"
-                                                    className="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
-                                                >
-                                                    Отправить на email
-                                                </button>
-                                            </form>
-                                            <button
-                                                onClick={() => this.deleteUser(user.id)}
-                                                className="w-full mt-2 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md"
-                                            >
-                                                Удалить
-                                            </button>
-                                        </div>
-                                    ))}
+                            {loading ? (
+                                <div className="text-center py-6">
+                                    <svg className="animate-spin h-8 w-8 text-orange-600 mx-auto" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                    </svg>
+                                    <p className="text-gray-600 mt-2">Загрузка...</p>
                                 </div>
-                            )}
-
-                            {activeTab === 'branch' && (
-                                <form onSubmit={this.addBranch} className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Название филиала</label>
-                                        <input
-                                            type="text"
-                                            name="branchName"
-                                            value={branchName}
-                                            onChange={this.handleInputChange}
-                                            className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
-                                            placeholder="Название филиала"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Город</label>
-                                        <input
-                                            type="text"
-                                            name="branchCity"
-                                            value={branchCity}
-                                            onChange={this.handleInputChange}
-                                            className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
-                                            placeholder="Город"
-                                        />
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
-                                    >
-                                        {editingBranch ? 'Сохранить изменения' : 'Добавить филиал'}
-                                    </button>
-                                </form>
-                            )}
-
-                            {activeTab === 'manageBranches' && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {branches.map((branch) => (
-                                        <div
-                                            key={branch.id}
-                                            className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                                        >
-                                            <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{branch.name}</h3>
-                                            <p className="text-gray-600 text-sm mb-4 text-center">{branch.city}</p>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => this.editBranch(branch)}
-                                                    className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-sm"
+                            ) : (
+                                <>
+                                    {activeTab === 'users' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {users.map((user) => (
+                                                <div
+                                                    key={user.id}
+                                                    className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                                                 >
-                                                    Редактировать
-                                                </button>
-                                                <button
-                                                    onClick={() => this.deleteBranch(branch.id)}
-                                                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-sm"
-                                                >
-                                                    Удалить
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {activeTab === 'category' && (
-                                <form onSubmit={this.addCategory} className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Эмодзи категории</label>
-                                        <input
-                                            type="text"
-                                            name="categoryEmoji"
-                                            value={categoryEmoji}
-                                            onChange={this.handleInputChange}
-                                            className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
-                                            placeholder="Эмодзи категории (например, 🍕)"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Название категории</label>
-                                        <input
-                                            type="text"
-                                            name="categoryName"
-                                            value={categoryName}
-                                            onChange={this.handleInputChange}
-                                            className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
-                                            placeholder="Название категории"
-                                        />
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
-                                    >
-                                        Добавить категорию
-                                    </button>
-                                </form>
-                            )}
-
-                            {activeTab === 'subcategory' && (
-                                <form onSubmit={this.addSubcategory} className="space-y-6 bg-orange-50 p-6 rounded-xl shadow-lg">
-                                    <div>
-                                        <label className="block text-sm font-medium text-orange-700 mb-1">Категория</label>
-                                        <select
-                                            name="selectedCategory"
-                                            value={selectedCategory}
-                                            onChange={this.handleInputChange}
-                                            className="w-full p-3 bg-white border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300 text-gray-700"
-                                        >
-                                            <option value="">Выберите категорию</option>
-                                            {categories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>
-                                                    {cat.emoji ? `${cat.emoji} ${cat.name}` : cat.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-orange-700 mb-1">Название подкатегории</label>
-                                        <input
-                                            type="text"
-                                            name="subcategoryName"
-                                            value={subcategoryName}
-                                            onChange={this.handleInputChange}
-                                            className="w-full p-3 bg-white border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300 text-gray-700"
-                                            placeholder="Название подкатегории"
-                                        />
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
-                                    >
-                                        {editingSubcategory ? 'Сохранить изменения' : 'Добавить подкатегорию'}
-                                    </button>
-                                </form>
-                            )}
-
-                            {activeTab === 'manageSubcategories' && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {subcategories.map((sub) => {
-                                        const category = categories.find((cat) => cat.id === sub.category);
-                                        return (
-                                            <div
-                                                key={sub.id}
-                                                className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                                            >
-                                                <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{sub.name}</h3>
-                                                <p className="text-gray-600 text-sm mb-4 text-center">
-                                                    Категория: {category ? `${category.emoji} ${category.name}` : 'Не указана'}
-                                                </p>
-                                                <div className="flex space-x-2">
+                                                    <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{user.name}</h3>
+                                                    <p className="text-gray-600 text-sm mb-1 text-center">
+                                                        <strong>Логин:</strong> {user.username}
+                                                    </p>
+                                                    <p className="text-gray-600 text-sm mb-1 text-center">
+                                                        <strong>Email:</strong> {user.email}
+                                                    </p>
+                                                    <p className="text-gray-600 text-sm mb-4 text-center">
+                                                        <strong>Телефон:</strong> {user.phone}
+                                                    </p>
+                                                    <form onSubmit={(e) => this.sendPromoCode(e, user.username)} className="space-y-4">
+                                                        <input
+                                                            type="text"
+                                                            name="promoCode"
+                                                            value={promoCode}
+                                                            onChange={this.handleInputChange}
+                                                            className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
+                                                            placeholder="Промокод"
+                                                        />
+                                                        <button
+                                                            type="submit"
+                                                            className="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
+                                                        >
+                                                            Отправить на email
+                                                        </button>
+                                                    </form>
                                                     <button
-                                                        onClick={() => this.editSubcategory(sub)}
-                                                        className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-sm"
-                                                    >
-                                                        Редактировать
-                                                    </button>
-                                                    <button
-                                                        onClick={() => this.deleteSubcategory(sub.id)}
-                                                        className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-sm"
+                                                        onClick={() => this.deleteUser(user.id)}
+                                                        className="w-full mt-2 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md"
                                                     >
                                                         Удалить
                                                     </button>
                                                 </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'branch' && (
+                                        <form onSubmit={this.addBranch} className="space-y-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Название филиала</label>
+                                                <input
+                                                    type="text"
+                                                    name="branchName"
+                                                    value={branchName}
+                                                    onChange={this.handleInputChange}
+                                                    className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
+                                                    placeholder="Название филиала"
+                                                />
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Город</label>
+                                                <input
+                                                    type="text"
+                                                    name="branchCity"
+                                                    value={branchCity}
+                                                    onChange={this.handleInputChange}
+                                                    className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
+                                                    placeholder="Город"
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
+                                            >
+                                                {editingBranch ? 'Сохранить изменения' : 'Добавить филиал'}
+                                            </button>
+                                        </form>
+                                    )}
+
+                                    {activeTab === 'manageBranches' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {branches.map((branch) => (
+                                                <div
+                                                    key={branch.id}
+                                                    className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                                >
+                                                    <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{branch.name}</h3>
+                                                    <p className="text-gray-600 text-sm mb-4 text-center">{branch.city}</p>
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={() => this.editBranch(branch)}
+                                                            className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-sm"
+                                                        >
+                                                            Редактировать
+                                                        </button>
+                                                        <button
+                                                            onClick={() => this.deleteBranch(branch.id)}
+                                                            className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-sm"
+                                                        >
+                                                            Удалить
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'category' && (
+                                        <form onSubmit={this.addCategory} className="space-y-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Эмодзи категории</label>
+                                                <input
+                                                    type="text"
+                                                    name="categoryEmoji"
+                                                    value={categoryEmoji}
+                                                    onChange={this.handleInputChange}
+                                                    className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
+                                                    placeholder="Эмодзи категории (например, 🍕)"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Название категории</label>
+                                                <input
+                                                    type="text"
+                                                    name="categoryName"
+                                                    value={categoryName}
+                                                    onChange={this.handleInputChange}
+                                                    className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300"
+                                                    placeholder="Название категории"
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
+                                            >
+                                                Добавить категорию
+                                            </button>
+                                        </form>
+                                    )}
+
+                                    {activeTab === 'subcategory' && (
+                                        <form onSubmit={this.addSubcategory} className="space-y-6 bg-orange-50 p-6 rounded-xl shadow-lg">
+                                            <div>
+                                                <label className="block text-sm font-medium text-orange-700 mb-1">Категория</label>
+                                                <select
+                                                    name="selectedCategory"
+                                                    value={selectedCategory}
+                                                    onChange={this.handleInputChange}
+                                                    className="w-full p-3 bg-white border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300 text-gray-700"
+                                                >
+                                                    <option value="">Выберите категорию</option>
+                                                    {categories.map((cat) => (
+                                                        <option key={cat.id} value={cat.id}>
+                                                            {cat.emoji ? `${cat.emoji} ${cat.name}` : cat.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-orange-700 mb-1">Название подкатегории</label>
+                                                <input
+                                                    type="text"
+                                                    name="subcategoryName"
+                                                    value={subcategoryName}
+                                                    onChange={this.handleInputChange}
+                                                    className="w-full p-3 bg-white border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-300 text-gray-700"
+                                                    placeholder="Название подкатегории"
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-md"
+                                            >
+                                                {editingSubcategory ? 'Сохранить изменения' : 'Добавить подкатегорию'}
+                                            </button>
+                                        </form>
+                                    )}
+
+                                    {activeTab === 'manageSubcategories' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {subcategories.map((sub) => {
+                                                const category = categories.find((cat) => cat.id === (sub.category?.id || sub.category));
+                                                return (
+                                                    <div
+                                                        key={sub.id}
+                                                        className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                                    >
+                                                        <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{sub.name}</h3>
+                                                        <p className="text-gray-600 text-sm mb-4 text-center">
+                                                            Категория: {category ? `${category.emoji || ''} ${category.name}` : 'Не указана'}
+                                                        </p>
+                                                        <div className="flex space-x-2">
+                                                            <button
+                                                                onClick={() => this.editSubcategory(sub)}
+                                                                className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-sm"
+                                                            >
+                                                                Редактировать
+                                                            </button>
+                                                            <button
+                                                                onClick={() => this.deleteSubcategory(sub.id)}
+                                                                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-sm"
+                                                            >
+                                                                Удалить
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -1016,53 +1026,63 @@ export default class Admin extends Component {
 
                     <div className="mb-10">
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Продукты</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {products.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className="relative bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                                >
-                                    {product.image ? (
-                                        <img
-                                            src={`http://localhost:8000${product.image}`}
-                                            alt={product.name}
-                                            className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 hover:scale-105"
-                                            onError={(e) => (e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found')}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-48 bg-gray-200 rounded-xl mb-4 flex items-center justify-center">
-                                            <span className="text-gray-500">Нет изображения</span>
-                                        </div>
-                                    )}
-                                    <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{product.name}</h3>
-                                    <p className="text-gray-600 text-sm mb-4 text-center">
-                                        {this.isPizza(product.subcategory.id) ? (
-                                            <>
-                                                Цена: {this.formatNumber(product.prices?.small)} сом (S) |{' '}
-                                                {this.formatNumber(product.prices?.medium)} сом (M) |{' '}
-                                                {this.formatNumber(product.prices?.large)} сом (L)
-                                            </>
+                        {loading ? (
+                            <div className="text-center py-6">
+                                <svg className="animate-spin h-8 w-8 text-orange-600 mx-auto" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                </svg>
+                                <p className="text-gray-600 mt-2">Загрузка...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {products.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className="relative bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                    >
+                                        {product.image ? (
+                                            <img
+                                                src={`http://localhost:8000${product.image}`}
+                                                alt={product.name}
+                                                className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 hover:scale-105"
+                                                onError={(e) => (e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found')}
+                                            />
                                         ) : (
-                                            <>Цена: {this.formatNumber(product.price)} сом</>
+                                            <div className="w-full h-48 bg-gray-200 rounded-xl mb-4 flex items-center justify-center">
+                                                <span className="text-gray-500">Нет изображения</span>
+                                            </div>
                                         )}
-                                    </p>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => this.editProduct(product)}
-                                            className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-sm"
-                                        >
-                                            Редактировать
-                                        </button>
-                                        <button
-                                            onClick={() => this.deleteProduct(product.id)}
-                                            className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-sm"
-                                        >
-                                            Удалить
-                                        </button>
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">{product.name}</h3>
+                                        <p className="text-gray-600 text-sm mb-4 text-center">
+                                            {this.isPizza(product.subcategory.id) ? (
+                                                <>
+                                                    Цена: {this.formatNumber(product.prices?.small)} сом (S) |{' '}
+                                                    {this.formatNumber(product.prices?.medium)} сом (M) |{' '}
+                                                    {this.formatNumber(product.prices?.large)} сом (L)
+                                                </>
+                                            ) : (
+                                                <>Цена: {this.formatNumber(product.price)} сом</>
+                                            )}
+                                        </p>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => this.editProduct(product)}
+                                                className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 shadow-sm"
+                                            >
+                                                Редактировать
+                                            </button>
+                                            <button
+                                                onClick={() => this.deleteProduct(product.id)}
+                                                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all duration-300 shadow-sm"
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
